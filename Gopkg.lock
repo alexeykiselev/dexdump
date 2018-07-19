@@ -3,6 +3,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/c2h5oh/datasize"
+  packages = ["."]
+  revision = "4eba002a5eaea69cf8d235a388fc6b65ae68d2dd"
+
+[[projects]]
+  branch = "master"
   name = "github.com/golang/snappy"
   packages = ["."]
   revision = "2e65f85255dbc3072edf28d6b5b8efc472979f5a"
@@ -41,6 +47,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d7d193e09646ae9fd01662f5c4ece47f1656fdfbfbbc8d7febff023f2d82b6ca"
+  inputs-digest = "b32b88105085a94d2d1ebb86a562deb47fa386508827b1a6042601a368debad6"
   solver-name = "gps-cdcl"
   solver-version = 1

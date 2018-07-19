@@ -12,7 +12,7 @@ import (
 	"github.com/jinzhu/now"
 	"sort"
 	"flag"
-	"github.com/syndtr/goleveldb/leveldb/opt"
+	"github.com/alexeykiselev/dexdump"
 )
 
 const prefix = uint16(18)
@@ -37,24 +37,8 @@ func (s statsSlice) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
 }
 
-func trackTime(start time.Time, message string) {
-	elapsed := time.Since(start)
-	log.Printf("%s in %s", message, elapsed)
-}
-
-func openDB(path string) *leveldb.DB {
-	o := &opt.Options{}
-	o.ReadOnly = true
-	o.ErrorIfMissing = true
-	db, err := leveldb.OpenFile(path, o)
-	if err != nil {
-		log.Fatalf("Failed to open database '%s': %s", path, err)
-	}
-	return db
-}
-
 func main() {
-	defer trackTime(time.Now(), "Done")
+	defer dexdump.TrackTime(time.Now(), "Done")
 
 	nodeDBPath := flag.String("node", "", "Path to node's LevelDB directory")
 	matcherDBPath := flag.String("matcher", "", "Path to matcher's LevelDB directory")
@@ -68,10 +52,10 @@ func main() {
 	p := make([]byte, 2)
 	binary.BigEndian.PutUint16(p, uint16(prefix))
 
-	ndb := openDB(*nodeDBPath)
+	ndb := dexdump.OpenDB(*nodeDBPath)
 	defer ndb.Close()
 
-	mdb := openDB(*matcherDBPath)
+	mdb := dexdump.OpenDB(*matcherDBPath)
 	defer mdb.Close()
 
 	weeks := make(map[time.Time]stats)
