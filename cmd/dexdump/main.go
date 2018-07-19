@@ -12,6 +12,7 @@ import (
 	"github.com/jinzhu/now"
 	"sort"
 	"flag"
+	"github.com/syndtr/goleveldb/leveldb/opt"
 )
 
 const prefix = uint16(18)
@@ -42,7 +43,10 @@ func trackTime(start time.Time, message string) {
 }
 
 func openDB(path string) *leveldb.DB {
-	db, err := leveldb.OpenFile(path, nil)
+	o := &opt.Options{}
+	o.ReadOnly = true
+	o.ErrorIfMissing = true
+	db, err := leveldb.OpenFile(path, o)
 	if err != nil {
 		log.Fatalf("Failed to open database '%s': %s", path, err)
 	}
