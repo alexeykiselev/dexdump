@@ -103,7 +103,9 @@ func main() {
 
 	for range keys {
 		s := <-statsCh
-		st[s.Prefix] = s
+		if s.Count > 0 {
+			st[s.Prefix] = s
+		}
 	}
 
 	printReport(st)
