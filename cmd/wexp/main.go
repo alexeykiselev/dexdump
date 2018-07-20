@@ -10,9 +10,11 @@ import (
 	"os"
 	"time"
 	"github.com/c2h5oh/datasize"
+	"github.com/syndtr/goleveldb/leveldb"
+	"github.com/syndtr/goleveldb/leveldb/util"
 )
 
-var keys = []string {
+var keys = []string{
 	"version",
 	"height",
 	"score",
@@ -70,6 +72,7 @@ func initKeys(keys []string) map[uint16]string {
 }
 
 type stats struct {
+	Prefix         uint16
 	Key            string
 	Count          int
 	TotalKeySize   datasize.ByteSize
@@ -91,29 +94,43 @@ func main() {
 
 	log.Println("Collecting DB stats")
 
+	statsCh := make(chan stats, len(keys))
 	st := make(map[uint16]stats)
 
-	it := db.NewIterator(nil, nil)
-	for it.Next() {
-		k := it.Key()
-		vs := len(it.Value())
-		id := binary.BigEndian.Uint16(k[:2])
+	for i := range keys {
+		go collect(db, uint16(i), statsCh)
+	}
 
-		if _, ok := st[id]; !ok {
-			st[id] = stats{Key: idToKey[id], Count: 0, TotalKeySize: 0, TotalValueSize: 0}
-		}
-		s := st[id]
-		s.Count++
-		s.TotalKeySize += datasize.ByteSize(len(k))
-		s.TotalValueSize += datasize.ByteSize(vs)
-		st[id] = s
+	for range keys {
+		s := <-statsCh
+		st[s.Prefix] = s
+	}
+
+	printReport(st)
+}
+
+func collect(db *leveldb.DB, p uint16, ch chan stats) {
+	it := db.NewIterator(util.BytesPrefix(prefix(p)), nil)
+	r := stats{Prefix: p, Key: idToKey[p], Count: 0, TotalKeySize: 0, TotalValueSize: 0}
+	for it.Next() {
+		ks := len(it.Key())
+		vs := len(it.Value())
+		r.Count++
+		r.TotalKeySize += datasize.ByteSize(ks)
+		r.TotalValueSize += datasize.ByteSize(vs)
 	}
 	it.Release()
 	err := it.Error()
 	if err != nil {
 		log.Fatalf("LevelDB iterator error: %s", err)
 	}
-	printReport(st)
+	ch <- r
+}
+
+func prefix(p uint16) []byte {
+	r := make([]byte, 2)
+	binary.BigEndian.PutUint16(r, p)
+	return r
 }
 
 func printReport(st map[uint16]stats) {
